@@ -30,7 +30,7 @@ button{font-family:inherit}
 .btn.primary:hover{background:#1d4ed8}
 .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
 .btn.small{padding:4px 9px;font-size:13px;border-radius:8px}
-main{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:12px;padding:12px;max-width:1500px;margin:0 auto}
+main{display:grid;grid-template-columns:minmax(0,1fr) clamp(440px,42vw,720px);gap:12px;padding:12px;max-width:1800px;margin:0 auto}
 @media (max-width:1000px){main{grid-template-columns:1fr}}
 .bench{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;align-self:start;position:sticky;top:108px}
 @media (max-width:1000px){.bench{position:static}}
@@ -54,7 +54,14 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:12px;padding:12p
 .vfix.ok .vfix-num{background:#16a34a}
 .vfix.bad{animation:vpulse 1.2s infinite}
 @keyframes vpulse{50%{box-shadow:0 0 0 6px #ea580c40}}
-.vfix-bench{position:absolute;left:12px;bottom:12px;max-width:min(430px,60%);margin:0;box-shadow:0 4px 14px #0002;pointer-events:none}
+.vfix .vfix-sub{margin-top:6px;font-size:14px;font-weight:800}
+.vchips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:4px}
+.vchip{background:#fff;border:2px solid #ea580c;color:#9a3412;border-radius:8px;padding:1px 7px;font-weight:900;font-size:15px;white-space:nowrap}
+.vchip.cur{background:#ea580c;color:#fff}
+.vchip.done{border-color:#16a34a;color:#15803d}
+.vchip.done.cur{background:#16a34a;color:#fff}
+.varr{color:#9a3412;font-weight:900}
+.vfix-bench{position:absolute;left:12px;bottom:12px;max-width:min(520px,64%);margin:0;box-shadow:0 4px 14px #0002;pointer-events:none}
 .benchhint{padding:8px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
 .side{display:flex;flex-direction:column;gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
@@ -279,11 +286,12 @@ for (const key in DEF) for (const t of DEF[key].terms) { TERM_IDS.push(t.id); TE
 
 const EXP = {
   1:{title:'실험 1. 전압에 따른 전류 변화',
-     goal:'니크롬선의 저항을 일정하게 두고, 전압을 바꾸면서 전류가 어떻게 변하는지 알아봅니다.',
+     goal:'니크롬선의 저항을 5 Ω으로 일정하게 두고, 전압을 바꾸면서 전류가 어떻게 변하는지 알아봅니다.',
      steps:['전원 장치, 스위치, 전류 센서, 니크롬선 저항판을 연결해 닫힌 회로를 만들어요.',
             '전류 센서와 전압 센서를 알맞은 방법(직렬/병렬)으로 연결해요.',
             '\'회로 점검\'을 눌러 연결이 바른지 확인해요.',
-            '스위치를 켜고 전압을 0.5 V, 1.0 V, 1.5 V, 2.0 V, 2.5 V로 높이며 측정값을 기록해요. (니크롬선 연결은 그대로!)',
+            '⚡ 니크롬선 저항은 5 Ω으로 연결하고, 실험이 끝날 때까지 절대 바꾸지 않아요!',
+            '⚡ 스위치를 켜고 전압을 0.5 V → 1.0 V → 1.5 V → 2.0 V → 2.5 V로 바꿔 가며 측정값을 기록해요.',
             '그래프 모양을 보고 전압과 전류의 관계를 정리해요.'],
      hint:'전류 센서는 전류가 흐르는 길 중간에 끼워 넣어 <b>직렬</b>로, 전압 센서는 측정하려는 니크롬선의 양 끝에 나란히 <b>병렬</b>로 연결해요. 센서의 (+)단자는 전원 (+)극 쪽, (−)단자는 전원 (−)극 쪽으로 연결해요.'},
   2:{title:'실험 2. 저항에 따른 전류 변화',
@@ -605,12 +613,28 @@ function update(){
   renderCheckFoot();
   renderVFix();
 }
+const V1 = [0.5, 1.0, 1.5, 2.0, 2.5];
 function renderVFix(){
-  const on = state.exp === 2, ok = Math.abs(state.V - 2) < 1e-9;
-  const html = `<div class="vfix-title">⚡ 실험 2 : 전원 전압은 반드시 <span class="vfix-num">2.0 V</span> 고정!</div>` +
-    `<div class="vfix-state">${ok ? '' : `⚠ 지금 ${state.V.toFixed(1)} V — 전원 장치의 −/+ 버튼으로 2.0 V에 맞추세요.`}</div>`;
+  let html, ok, bad;
+  if (state.exp === 2){
+    ok = Math.abs(state.V - 2) < 1e-9; bad = !ok;
+    html = `<div class="vfix-title">⚡ 실험 2 : 전원 전압은 반드시 <span class="vfix-num">2.0 V</span> 고정!</div>` +
+      `<div class="vfix-state">${ok ? '' : `⚠ 지금 ${state.V.toFixed(1)} V — 전원 장치의 −/+ 버튼으로 2.0 V에 맞추세요.`}</div>`;
+  } else {
+    const chk = checkCircuit(), vOk = V1.some(v => Math.abs(v - state.V) < 1e-9);
+    const done = new Set(state.data1.map(r => r.set.toFixed(1)));
+    const chips = V1.map(v => { const k = v.toFixed(1), d = done.has(k), c = Math.abs(v - state.V) < 1e-9;
+      return `<span class="vchip${d ? ' done' : ''}${c ? ' cur' : ''}">${d ? '✓ ' : ''}${k} V</span>`; }).join('<span class="varr">→</span>');
+    const warn = [];
+    if (chk.pass && chk.R !== 5) warn.push('⚠ 지금 니크롬선 저항이 5 Ω이 아니에요. 연결한 단자를 확인하세요.');
+    if (!vOk) warn.push(`⚠ 지금 ${state.V.toFixed(1)} V — 위의 전압 중 하나로 맞추세요.`);
+    bad = warn.length > 0; ok = !bad && chk.pass;
+    html = `<div class="vfix-title">⚡ 실험 1 : 니크롬선 저항은 반드시 <span class="vfix-num">5 Ω</span> 고정!</div>` +
+      `<div class="vfix-sub">전압은 차례로 바꿔 가며 기록해요</div><div class="vchips">${chips}</div>` +
+      `<div class="vfix-state">${warn.join('<br>')}</div>`;
+  }
   for (const id of ['#vFixBox', '#vFixBench']){
-    const b = $(id); b.classList.toggle('hidden', !on); b.classList.toggle('ok', ok); b.classList.toggle('bad', !ok); b.innerHTML = html;
+    const b = $(id); b.classList.remove('hidden'); b.classList.toggle('ok', ok); b.classList.toggle('bad', bad); b.innerHTML = html;
   }
 }
 function setV(v){ state.V = clamp(Math.round(v*10)/10, 0, 3); update(); save(); }
@@ -701,7 +725,8 @@ function record(){
   const Vm = Number(s.Vvm.toFixed(2)), Im = Number(s.Iam.toFixed(3));
   if (state.exp === 1){
     const d = state.data1;
-    if (d.length && d[0].R !== chk.R){ toast('실험 1에서는 니크롬선 연결(저항)을 바꾸면 안 돼요. 처음과 같은 단자에 연결하세요.', 'bad'); return; }
+    if (chk.R !== 5){ toast('실험 1에서는 니크롬선 저항을 반드시 5 Ω으로 연결해야 해요.', 'bad'); return; }
+    if (!V1.some(v => Math.abs(v - state.V) < 1e-9)){ toast(`실험 1에서는 전압을 0.5 V, 1.0 V, 1.5 V, 2.0 V, 2.5 V 중 하나로 맞춰 기록해요. (지금 ${state.V.toFixed(1)} V)`, 'bad'); return; }
     d.push({set:state.V, V:Vm, I:Im, R:chk.R});
     toast(`${d.length}번째 측정값을 표에 기록했어요.`, 'ok');
   } else {
@@ -753,6 +778,7 @@ function renderData(){
   $('#quizCard').classList.toggle('hidden', !(state.exp === 2 && state.data2.length >= TARGETS.length));
   renderQuiz();
   drawGraph();
+  renderVFix();
 }
 $('#tableWrap').addEventListener('click', e => {
   const b = e.target.closest('[data-delrow]'); if (!b) return;
@@ -847,7 +873,7 @@ $('#btnHelp').addEventListener('click', () => $('#helpModal').classList.remove('
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.modal').classList.add('hidden')));
 $('#btnExample').addEventListener('click', () => askConfirm('정답 예시(교사용)', '예시 회로로 바꿀까요? 지금 연결한 도선은 모두 지워져요.', () => {
   const mk = (a, b, color) => ({id:'w' + Math.random().toString(36).slice(2, 9), a, b, color});
-  state.wires = [mk('psu+','am+','#d32f2f'), mk('am-','r0','#222222'), mk('r2','sw1','#222222'), mk('sw2','psu-','#222222'), mk('vm+','r0','#d32f2f'), mk('vm-','r2','#222222')];
+  state.wires = [mk('psu+','am+','#d32f2f'), mk('am-','r0','#222222'), mk('r1','sw1','#222222'), mk('sw2','psu-','#222222'), mk('vm+','r0','#d32f2f'), mk('vm-','r1','#222222')];
   sel = null; renderWires(); update(); save();
 }));
 function renderChips(){
