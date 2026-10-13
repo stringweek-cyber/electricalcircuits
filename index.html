@@ -60,6 +60,9 @@ main{display:grid;grid-template-columns:minmax(0,1fr) clamp(440px,42vw,720px);ga
 .vchip.cur{background:#ea580c;color:#fff}
 .vchip.done{border-color:#16a34a;color:#15803d}
 .vchip.done.cur{background:#16a34a;color:#fff}
+.mguide{margin-top:8px;padding-top:8px;border-top:1px dashed #93c5fd;font-size:13.5px;color:#1e3a8a}
+.mguide ol{margin:4px 0 0;padding-left:20px}
+.mguide li{margin:2px 0}
 .varr{color:#9a3412;font-weight:900}
 .vfix-bench{position:absolute;left:12px;bottom:12px;max-width:min(520px,64%);margin:0;box-shadow:0 4px 14px #0002;pointer-events:none}
 .benchhint{padding:8px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
@@ -299,7 +302,8 @@ const EXP = {
      steps:['전원 장치, 스위치, 전류 센서, 니크롬선 저항판을 연결해 닫힌 회로를 만들어요.',
             '전류 센서와 전압 센서를 알맞은 방법(직렬/병렬)으로 연결하고 \'회로 점검\'을 해요.',
             '⚡ 전원 전압을 2.0 V로 맞추고, 실험이 끝날 때까지 절대 바꾸지 않아요!',
-            '목표 저항이 되도록 니크롬선에 꽂는 단자를 바꿔 가며 측정값을 기록해요. 전압 센서도 함께 옮겨야 해요!',
+            '⚡ 저항을 5 Ω → 10 Ω → 15 Ω → 20 Ω → 25 Ω로 5 Ω씩 늘려 가며 측정값을 기록해요.',
+            '⚡ 저항을 늘릴 때마다 니크롬선에 꽂힌 도선을 지우고, 한 칸 더 먼 단자에 새로 연결해요. 전압 센서 도선도 지우고 새 단자에 다시 연결해요!',
             '그래프를 보고 저항과 전류의 관계를 정리하고, 개념 확인 문제를 풀어요.'],
      hint:'니크롬선은 <b>한 칸에 5 Ω</b>이에요. 저항은 두 단자 사이의 직선 거리가 아니라, <b>전류가 지나는 니크롬선의 길이(칸 수)</b>로 정해져요. 지그재그를 따라 칸 수를 세어 보세요.<br>전압 센서는 전류가 지나는 니크롬선 구간의 양 끝에 병렬로 연결해요.'}
 };
@@ -618,7 +622,10 @@ function renderVFix(){
   let html, ok, bad;
   if (state.exp === 2){
     ok = Math.abs(state.V - 2) < 1e-9; bad = !ok;
+    const n2 = state.data2.length;
+    const chips = TARGETS.map((t, i) => `<span class="vchip${i < n2 ? ' done' : ''}${i === n2 ? ' cur' : ''}">${i < n2 ? '✓ ' : ''}${t} Ω</span>`).join('<span class="varr">→</span>');
     html = `<div class="vfix-title">⚡ 실험 2 : 전원 전압은 반드시 <span class="vfix-num">2.0 V</span> 고정!</div>` +
+      `<div class="vfix-sub">저항은 5 Ω씩 늘려 가며 기록해요</div><div class="vchips">${chips}</div>` +
       `<div class="vfix-state">${ok ? '' : `⚠ 지금 ${state.V.toFixed(1)} V — 전원 장치의 −/+ 버튼으로 2.0 V에 맞추세요.`}</div>`;
   } else {
     const chk = checkCircuit(), vOk = V1.some(v => Math.abs(v - state.V) < 1e-9);
@@ -752,7 +759,15 @@ function renderMission(){
   if (n >= TARGETS.length){ m.className = 'mission done'; m.innerHTML = '✅ 모든 목표 저항을 측정했어요!'; return; }
   m.className = 'mission';
   const fixed = ' · 전압 2.0 V 고정';
-  m.innerHTML = `🎯 현재 목표: 니크롬선 저항 <b>${TARGETS[n]} Ω</b> 만들기 (${n + 1}/${TARGETS.length})${fixed}`;
+  m.innerHTML = `🎯 현재 목표: 니크롬선 저항 <b>${TARGETS[n]} Ω</b> 만들기 (${n + 1}/${TARGETS.length})${fixed}` +
+    (n === 0
+      ? `<div class="mguide">👉 니크롬선 <b>한 칸(5 Ω)</b>만 지나도록 연결해서 시작해요.</div>`
+      : `<div class="mguide"><b>🔁 ${TARGETS[n - 1]} Ω → ${TARGETS[n]} Ω : 저항을 5 Ω 늘리려면 도선을 새로 연결해요</b><ol>
+          <li>스위치를 꺼요.</li>
+          <li>니크롬선 단자에 꽂힌 도선 <b>하나</b>를 눌러 <b>✕</b>로 지워요.</li>
+          <li>니크롬선을 <b>한 칸 더</b> 지나도록, 그다음 단자에 도선을 <b>새로 연결</b>해요.</li>
+          <li><b>전압 센서 도선도</b> 지우고, 바뀐 니크롬선 양 끝 단자에 <b>새로 연결</b>해요.</li>
+          <li>'회로 점검' → 스위치 켜기 → '측정값 기록'</li></ol></div>`);
 }
 function renderData(){
   renderMission();
