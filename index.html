@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전기 회로 연결 실험실</title>
+<style>
+:root{--bg:#eef2f7;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e2e8f0;--blue:#2563eb;--teal:#0e9aa7;--ok:#16a34a;--bad:#dc2626;--warn:#d97706}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px 0;background:#fff;border-bottom:1px solid #cbd5e1;position:sticky;top:0;z-index:20}
+header h1{font-size:18px;margin:0;white-space:nowrap}
+.tabs{display:flex;flex:0 0 calc(100% + 32px);order:3;margin:0 -16px;border-top:1px solid var(--line)}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-bottom:4px solid transparent;background:#f8fafc;padding:10px 12px 8px;cursor:pointer;font-family:inherit;color:#64748b;transition:background .15s,color .15s}
+.tab+.tab{border-left:1px solid var(--line)}
+.tab:hover{background:#f1f5f9}
+.tab .num{font-size:13px;font-weight:800;padding:2px 9px;border-radius:999px;background:#e2e8f0;color:#475569;white-space:nowrap}
+.tab .lbl{font-size:16px;font-weight:800}
+.tab[data-exp="1"].active{background:#eff6ff;color:#1d4ed8;border-bottom-color:#2563eb}
+.tab[data-exp="1"].active .num{background:#2563eb;color:#fff}
+.tab[data-exp="2"].active{background:#fff7ed;color:#c2410c;border-bottom-color:#ea580c}
+.tab[data-exp="2"].active .num{background:#ea580c;color:#fff}
+@media (max-width:560px){.tab{flex-direction:column;gap:2px}.tab .lbl{font-size:14px}}
+.hbtns{margin-left:auto;display:flex;gap:6px}
+button{font-family:inherit}
+.btn{border:1px solid #cbd5e1;background:#fff;color:#1f2937;padding:7px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{background:#f1f5f9}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.small{padding:4px 9px;font-size:13px;border-radius:8px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:12px;padding:12px;max-width:1500px;margin:0 auto}
+@media (max-width:1000px){main{grid-template-columns:1fr}}
+.bench{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;align-self:start;position:sticky;top:108px}
+@media (max-width:1000px){.bench{position:static}}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.chips{display:flex;gap:4px;align-items:center}
+.chip{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;cursor:pointer;padding:0}
+.chip.auto{width:auto;height:24px;border-radius:999px;padding:0 9px;font-size:12px;font-weight:700;background:#f8fafc;color:#334155}
+.chip.on{box-shadow:0 0 0 3px var(--blue)}
+.tb-right{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.svgwrap{position:relative}
+#bench{width:100%;height:auto;display:block;touch-action:none;background-color:#f7f9fb;background-image:radial-gradient(#d6dde6 1px,transparent 1px);background-size:20px 20px}
+.banner{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:var(--bad);color:#fff;padding:8px 14px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:0 4px 14px #0003;animation:blink 1s infinite;max-width:92%;text-align:center}
+@keyframes blink{50%{opacity:.75}}
+.hidden{display:none!important}
+.vfix{border:3px solid #ea580c;background:#fff7ed;border-radius:12px;padding:10px 12px;margin:0 0 10px;color:#7c2d12}
+.vfix .vfix-title{font-size:16px;font-weight:900;line-height:1.35}
+.vfix .vfix-num{display:inline-block;background:#ea580c;color:#fff;border-radius:8px;padding:0 8px;font-size:18px}
+.vfix .vfix-state:empty{display:none}
+.vfix .vfix-state{margin-top:4px;font-size:13.5px;font-weight:700}
+.vfix.ok{border-color:#16a34a;background:#f0fdf4;color:#14532d}
+.vfix.ok .vfix-num{background:#16a34a}
+.vfix.bad{animation:vpulse 1.2s infinite}
+@keyframes vpulse{50%{box-shadow:0 0 0 6px #ea580c40}}
+.vfix-bench{position:absolute;left:12px;bottom:12px;max-width:min(430px,60%);margin:0;box-shadow:0 4px 14px #0002;pointer-events:none}
+.benchhint{padding:8px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{font-size:15px;margin:0 0 8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.goal{color:#334155;margin:0 0 8px;font-size:14px}
+ol.steps{margin:0;padding-left:20px;font-size:13.5px;color:#334155}
+ol.steps li{margin:3px 0}
+ul.checks{list-style:none;margin:10px 0 0;padding:0;font-size:13.5px}
+ul.checks li{display:flex;gap:8px;padding:7px 0;border-top:1px dashed var(--line)}
+ul.checks li:first-child{border-top:0}
+ul.checks .ic{flex:0 0 20px;text-align:center}
+ul.checks b{display:block}
+ul.checks .m{color:#475569}
+.muted{color:var(--muted)}
+.stale{margin-top:8px;font-size:12.5px;color:var(--warn);font-weight:600}
+.passbadge{margin-top:8px;padding:8px 10px;border-radius:10px;background:#dcfce7;color:#166534;font-weight:700;font-size:13.5px}
+.ctrl{display:flex;align-items:center;gap:8px;margin:6px 0}
+.ctrl>span{width:64px;font-size:13.5px;color:#334155;font-weight:600}
+.ctrl input[type=range]{flex:1;accent-color:var(--blue)}
+.ctrl b{width:58px;text-align:right;font-variant-numeric:tabular-nums}
+.toggle{position:relative;width:60px;height:32px;border-radius:999px;border:1px solid #94a3b8;background:#cbd5e1;padding:0;cursor:pointer;transition:background .2s,border-color .2s}
+.toggle .knob{position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0004;transition:transform .2s}
+.toggle.on{background:#22c55e;border-color:#16a34a}
+.toggle.on .knob{transform:translateX(28px)}
+.ctrl b.swstate{width:auto;text-align:left;color:#64748b}
+.ctrl b.swstate.on{color:#16a34a}
+.swbtn{cursor:pointer}
+.swknob{transition:transform .2s}
+.live{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.live div{background:#0f2a2e;border-radius:10px;padding:8px 10px;color:#9ff5c8}
+.live small{display:block;color:#7dd3c8;font-size:12px}
+.live b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px}
+.mission{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px;color:#1e3a8a}
+.mission.done{background:#dcfce7;border-color:#86efac;color:#166534}
+.hintbox{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:13.5px;color:#78350f}
+.tablet{background:#1f2328;border:10px solid #1f2328;border-radius:18px;padding:0}
+.tablet .screen{background:#fff;border-radius:8px;padding:10px}
+.tablet h2{margin-bottom:6px}
+#graph{width:100%;height:230px;display:block}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:5px 6px;text-align:center}
+th{background:#f8fafc;font-weight:700}
+td.pending{color:#94a3b8}
+.conclusion{margin-top:8px;font-size:13.5px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;color:#14532d}
+.conclusion:empty{display:none}
+.q{border-top:1px dashed var(--line);padding:10px 0}
+.q:first-of-type{border-top:0}
+.q p{margin:0 0 6px;font-weight:600;font-size:14px}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opt{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13.5px}
+.opt.right{background:#dcfce7;border-color:#22c55e}
+.opt.wrong{background:#fee2e2;border-color:#ef4444}
+.qexp{margin-top:6px;font-size:13px;color:#334155}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:min(92vw,560px);z-index:50;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.bad{background:var(--bad)}
+#toast.ok{background:var(--ok)}
+.modal{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+.modal .box{background:#fff;border-radius:16px;max-width:520px;width:100%;padding:18px;max-height:85vh;overflow:auto}
+.modal h3{margin:0 0 8px}
+.modal ul{padding-left:18px;margin:6px 0;font-size:14px}
+.modal .row{justify-content:flex-end;margin-top:12px}
+/* SVG */
+#bench text{user-select:none;-webkit-user-select:none;pointer-events:none}
+.comp{cursor:grab}
+.comp.dragging{cursor:grabbing}
+.comp.dragging .body{filter:drop-shadow(0 8px 10px #0003)}
+.ctitle{font-size:21px;font-weight:800;fill:#1f2937;text-anchor:middle}
+.cname{font-size:19px;font-weight:800;fill:#334155;text-anchor:middle}
+.cname.cbig{font-size:19px}
+.seg7{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:30px;font-weight:700;fill:#ff5233;text-anchor:end}
+.seg7u{font-size:18px;font-weight:700;fill:#ff8a70}
+.lcd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;font-weight:700;fill:#7cffb2;text-anchor:end}
+.tiny{font-size:11px;fill:#475569}
+.wtxt{font-size:11px;fill:#fff;font-weight:700;text-anchor:middle}
+.pol{font-size:22px;font-weight:900;text-anchor:middle}
+.letter{font-size:20px;font-weight:900;fill:#0f3d75;text-anchor:middle}
+.seglab{font-size:17px;font-weight:700;fill:#6b4f22}
+.actbtn{cursor:pointer}
+.actbtn:hover rect{fill:#e0f2fe}
+.term{cursor:crosshair}
+.term .hit{fill:transparent}
+.term.hover .jack{stroke:#facc15;stroke-width:5}
+.wire .whit{fill:none;stroke:transparent;stroke-width:16;cursor:pointer}
+.wire .wout{fill:none;stroke:#00000055;stroke-width:7;stroke-linecap:round;pointer-events:none}
+.wire .win{fill:none;stroke-width:4.5;stroke-linecap:round;pointer-events:none}
+.wire.sel .wout{stroke:#2563eb;stroke-width:10}
+.clip{pointer-events:none}
+.temp{fill:none;stroke:#475569;stroke-width:3;stroke-dasharray:7 6;pointer-events:none}
+.delbtn{cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ 전기 회로 연결 실험실</h1>
+  <div class="tabs">
+    <button class="tab" data-exp="1"><span class="num">실험 1</span><span class="lbl">전압에 따른 전류 변화</span></button>
+    <button class="tab" data-exp="2"><span class="num">실험 2</span><span class="lbl">저항에 따른 전류 변화</span></button>
+  </div>
+  <div class="hbtns">
+    <button class="btn small" id="btnHelp">사용 방법</button>
+    <button class="btn small ghost" id="btnExample">정답 예시(교사용)</button>
+  </div>
+</header>
+
+<main>
+  <section class="bench">
+    <div class="toolbar">
+      <span>도선 색</span>
+      <div class="chips" id="chips"></div>
+      <div class="tb-right">
+        <button class="btn small" id="btnDelWire">선택 도선 삭제</button>
+        <button class="btn small" id="btnClearWires">도선 모두 지우기</button>
+        <button class="btn small" id="btnHome">부품 원위치</button>
+      </div>
+    </div>
+    <div class="svgwrap">
+      <svg id="bench" viewBox="0 0 1000 660" aria-label="실험대"></svg>
+      <div id="vFixBench" class="vfix vfix-bench hidden"></div>
+      <div id="shortBanner" class="banner hidden">⚠ 단락(합선)! 큰 전류가 흐르고 있어요. 스위치를 끄고 연결을 확인하세요.</div>
+    </div>
+    <div class="benchhint">단자를 눌러 끌고 가 다른 단자에 놓으면 도선이 연결돼요 · 도선을 누르면 ✕(삭제) 버튼이 나와요 · 부품 몸체를 끌면 위치를 옮길 수 있어요 · 스위치는 빨간 버튼을 눌러 켜고 꺼요</div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h2 id="goalTitle"></h2>
+      <p class="goal" id="goalText"></p>
+      <ol class="steps" id="steps"></ol>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h2 style="margin:0">① 회로 점검</h2><button class="btn primary" id="btnCheck">회로 점검</button></div>
+      <ul class="checks" id="checkList"><li class="muted">부품을 연결한 뒤 '회로 점검'을 눌러 보세요.</li></ul>
+      <div id="checkFoot"></div>
+    </div>
+
+    <div class="card">
+      <h2>② 측정</h2>
+      <div id="vFixBox" class="vfix hidden"></div>
+      <div class="live">
+        <div><small>전압 센서</small><b id="liveV">----</b></div>
+        <div><small>전류 센서</small><b id="liveI">----</b></div>
+      </div>
+      <div id="mission" class="mission hidden"></div>
+      <div class="row">
+        <button class="btn primary" id="btnRecord">측정값 기록</button>
+        <button class="btn" id="btnHint">힌트</button>
+        <button class="btn ghost" id="btnClearData">데이터 지우기</button>
+      </div>
+      <div id="hintBox" class="hintbox hidden"></div>
+    </div>
+
+    <div class="card tablet">
+      <div class="screen">
+        <h2>③ 스마트 기기</h2>
+        <div id="tableWrap"></div>
+        <div class="row" style="margin:10px 0 6px"><button class="btn primary" id="btnGraph">📈 그래프 그리기</button></div>
+        <canvas id="graph"></canvas>
+        <div id="conclusion" class="conclusion"></div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="quizCard">
+      <h2>④ 개념 확인</h2>
+      <div id="quiz"></div>
+    </div>
+  </aside>
+</main>
+
+<div id="toast"></div>
+
+<div class="modal hidden" id="helpModal">
+  <div class="box">
+    <h3>사용 방법</h3>
+    <ul>
+      <li><b>도선 연결</b>: 단자(동그란 잭)를 누른 채 끌어 다른 단자 위에서 놓아요. 한 단자에 여러 도선을 연결할 수 있어요.</li>
+      <li><b>도선 삭제</b>: 도선을 누르면 가운데에 ✕ 버튼이 생겨요. (키보드 Delete 키도 가능)</li>
+      <li><b>부품 이동</b>: 부품 몸체를 끌어 옮겨요.</li>
+      <li><b>전압 조절</b>: 전원 장치의 −/+ 버튼을 사용해요.</li>
+      <li><b>회로 점검</b>: 연결이 바른지 항목별로 알려 줘요. 점검을 통과해야 측정값을 기록할 수 있어요.</li>
+      <li><b>니크롬선 저항판</b>: 단자 A~F 사이 니크롬선 한 칸의 저항은 5 Ω이에요.</li>
+      <li>연결 상태와 측정 기록은 이 브라우저에 자동 저장돼요.</li>
+    </ul>
+    <div class="row"><button class="btn primary" data-close>닫기</button></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="confirmModal">
+  <div class="box">
+    <h3 id="confirmTitle">확인</h3>
+    <p id="confirmText" style="margin:0;font-size:14px"></p>
+    <div class="row"><button class="btn" id="confirmNo">취소</button><button class="btn primary" id="confirmYes">확인</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ===== 상수 ===== */
+const NS = 'http://www.w3.org/2000/svg';
+const VBW = 1000, VBH = 660;
+const SEG_R = 5, NSEG = 5;          // 니크롬선 한 칸 5 Ω, 5칸
+const R_SRC = 1e-4, R_AM = 1e-4, R_SW = 1e-4, R_VM = 1e7; // 내부저항(계산용 극소값 — 표시값에 영향 없음)
+const I_LIMIT = 2;                  // 이 이상이면 단락으로 판단
+const TARGETS = [5, 10, 15, 20, 25];
+const LETTERS = 'ABCDEF';
+const RB = [[50,80],[120,190],[190,80],[260,190],[330,80],[400,190]];
+const COLORS = [['#d32f2f','빨강'],['#222222','검정']];
+const DEF = {
+  psu:{w:300,h:170,name:'전원 장치',terms:[{id:'psu-',x:205,y:138,pol:'-'},{id:'psu+',x:255,y:138,pol:'+'}]},
+  sw:{w:110,h:170,name:'스위치',terms:[{id:'sw1',x:55,y:24,pol:'n'},{id:'sw2',x:55,y:146,pol:'n'}]},
+  am:{w:110,h:140,name:'전류 센서',terms:[{id:'am+',x:35,y:120,pol:'+'},{id:'am-',x:75,y:120,pol:'-'}]},
+  vm:{w:110,h:140,name:'전압 센서',terms:[{id:'vm+',x:35,y:120,pol:'+'},{id:'vm-',x:75,y:120,pol:'-'}]},
+  rb:{w:450,h:240,name:'니크롬선 저항판',terms:RB.map((p,i)=>({id:'r'+i,x:p[0],y:p[1],pol:'n',label:LETTERS[i]}))}
+};
+const HOME = {psu:{x:30,y:20},am:{x:390,y:30},vm:{x:540,y:30},sw:{x:40,y:260},rb:{x:500,y:370}};
+const DRAW_ORDER = ['rb','psu','sw','am','vm'];
+const TERM_IDS = [], TERM_INDEX = {};
+for (const key in DEF) for (const t of DEF[key].terms) { TERM_IDS.push(t.id); TERM_INDEX[t.id] = {key, t}; }
+
+const EXP = {
+  1:{title:'실험 1. 전압에 따른 전류 변화',
+     goal:'니크롬선의 저항을 일정하게 두고, 전압을 바꾸면서 전류가 어떻게 변하는지 알아봅니다.',
+     steps:['전원 장치, 스위치, 전류 센서, 니크롬선 저항판을 연결해 닫힌 회로를 만들어요.',
+            '전류 센서와 전압 센서를 알맞은 방법(직렬/병렬)으로 연결해요.',
+            '\'회로 점검\'을 눌러 연결이 바른지 확인해요.',
+            '스위치를 켜고 전압을 0.5 V, 1.0 V, 1.5 V, 2.0 V, 2.5 V로 높이며 측정값을 기록해요. (니크롬선 연결은 그대로!)',
+            '그래프 모양을 보고 전압과 전류의 관계를 정리해요.'],
+     hint:'전류 센서는 전류가 흐르는 길 중간에 끼워 넣어 <b>직렬</b>로, 전압 센서는 측정하려는 니크롬선의 양 끝에 나란히 <b>병렬</b>로 연결해요. 센서의 (+)단자는 전원 (+)극 쪽, (−)단자는 전원 (−)극 쪽으로 연결해요.'},
+  2:{title:'실험 2. 저항에 따른 전류 변화',
+     goal:'전압을 2.0 V로 일정하게 두고, 전류가 지나는 니크롬선의 길이(저항)를 바꾸면서 전류가 어떻게 변하는지 알아봅니다.',
+     steps:['전원 장치, 스위치, 전류 센서, 니크롬선 저항판을 연결해 닫힌 회로를 만들어요.',
+            '전류 센서와 전압 센서를 알맞은 방법(직렬/병렬)으로 연결하고 \'회로 점검\'을 해요.',
+            '⚡ 전원 전압을 2.0 V로 맞추고, 실험이 끝날 때까지 절대 바꾸지 않아요!',
+            '목표 저항이 되도록 니크롬선에 꽂는 단자를 바꿔 가며 측정값을 기록해요. 전압 센서도 함께 옮겨야 해요!',
+            '그래프를 보고 저항과 전류의 관계를 정리하고, 개념 확인 문제를 풀어요.'],
+     hint:'니크롬선은 <b>한 칸에 5 Ω</b>이에요. 저항은 두 단자 사이의 직선 거리가 아니라, <b>전류가 지나는 니크롬선의 길이(칸 수)</b>로 정해져요. 지그재그를 따라 칸 수를 세어 보세요.<br>전압 센서는 전류가 지나는 니크롬선 구간의 양 끝에 병렬로 연결해요.'}
+};
+const QUIZ = [
+  {q:'다음 중 저항이 가장 큰 연결은? (한 칸 = 5 Ω)',opts:['A – B','A – C','B – D','A – F'],ans:3,
+   exp:'A–F는 니크롬선 5칸(25 Ω)을 지나요. 같은 니크롬선이면 길이가 길수록 저항이 커요.'},
+  {q:'A와 C는 위쪽에 나란히 있어 가까워 보여요. A–B와 A–C 중 저항이 더 큰 것은?',opts:['A – B','A – C','둘이 같다'],ans:1,
+   exp:'저항은 직선 거리가 아니라 전류가 지나는 니크롬선의 길이로 정해져요. A–B는 1칸(5 Ω), A–C는 2칸(10 Ω)이에요.'},
+  {q:'전압을 일정하게 두고 전류가 니크롬선을 더 길게 지나도록 연결하면 전류는?',opts:['커진다','작아진다','변하지 않는다'],ans:1,
+   exp:'니크롬선이 길어지면 저항이 커져 전류가 작아져요. 전압이 일정할 때 전류는 저항에 반비례해요.'}
+];
+
+/* ===== 상태 ===== */
+const STORE_KEY = 'circuit-lab-v1';
+const state = {comps:JSON.parse(JSON.stringify(HOME)),wires:[],V:1.0,swOn:false,exp:1,data1:[],data2:[],wireColor:'#d32f2f',graphOn:{1:false,2:false}};
+let sel = null, drag = null, lastCheck = null, lastCheckSig = null;
+const quizAns = {};
+const refs = {g:{},term:{}};
+
+/* ===== 유틸 ===== */
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+function el(tag, attrs, parent){ const e = document.createElementNS(NS, tag); if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function txt(parent, x, y, s, attrs){ const t = el('text', Object.assign({x, y}, attrs||{}), parent); t.textContent = s; return t; }
+function fmt(v, d){ const s = v.toFixed(d); return (Number(s) === 0) ? (0).toFixed(d) : s; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+let toastTimer = null;
+function toast(msg, kind){ const t = $('#toast'); t.textContent = msg; t.className = 'show' + (kind ? ' ' + kind : ''); clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.className = ''; }, 3200); }
+function askConfirm(title, text, onYes){
+  $('#confirmTitle').textContent = title; $('#confirmText').textContent = text;
+  const m = $('#confirmModal'); m.classList.remove('hidden');
+  const close = () => { m.classList.add('hidden'); $('#confirmYes').onclick = null; $('#confirmNo').onclick = null; };
+  $('#confirmYes').onclick = () => { close(); onYes(); };
+  $('#confirmNo').onclick = close;
+}
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){} }
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (!s || typeof s !== 'object') return;
+    for (const k in HOME) if (s.comps && s.comps[k] && isFinite(s.comps[k].x) && isFinite(s.comps[k].y)) state.comps[k] = {x:s.comps[k].x, y:s.comps[k].y};
+    if (Array.isArray(s.wires)) state.wires = s.wires.filter(w => w && TERM_INDEX[w.a] && TERM_INDEX[w.b] && w.a !== w.b && typeof w.color === 'string');
+    if (isFinite(s.V)) state.V = clamp(Math.round(s.V*10)/10, 0, 3);
+    state.swOn = !!s.swOn;
+    state.exp = s.exp === 2 ? 2 : 1;
+    if (Array.isArray(s.data1)) state.data1 = s.data1.filter(d => d && isFinite(d.V) && isFinite(d.I));
+    if (Array.isArray(s.data2)) state.data2 = s.data2.filter(d => d && isFinite(d.V) && isFinite(d.I)).slice(0, TARGETS.length);
+    if (COLORS.some(c => c[0] === s.wireColor)) state.wireColor = s.wireColor;
+    if (s.graphOn) state.graphOn = {1:!!s.graphOn[1], 2:!!s.graphOn[2]};
+  } catch(e){}
+}
+
+/* ===== SVG 그리기 ===== */
+const svg = $('#bench');
+const gComps = el('g', {}, svg);
+const gWires = el('g', {}, svg);
+const tempPath = el('path', {class:'temp', d:''}, svg); tempPath.style.display = 'none';
+
+function tpos(id){ const {key, t} = TERM_INDEX[id]; const c = state.comps[key]; return {x:c.x + t.x, y:c.y + t.y}; }
+function wirePath(a, b){
+  const d = Math.hypot(b.x - a.x, b.y - a.y); const sag = Math.min(110, 25 + d*0.22);
+  return `M${a.x},${a.y} C${a.x},${a.y+sag} ${b.x},${b.y+sag} ${b.x},${b.y}`;
+}
+function actBtn(g, action, x, y, w, h, label){
+  const b = el('g', {'data-action':action, class:'actbtn'}, g);
+  el('rect', {x, y, width:w, height:h, rx:8, fill:'#fff', stroke:'#2b7aa0', 'stroke-width':2}, b);
+  txt(b, x + w/2, y + h/2 + 6, label, {'text-anchor':'middle', 'font-size':20, 'font-weight':800, fill:'#1d4f6b'});
+  return b;
+}
+const DRAW = {
+  psu(g, d){
+    el('rect', {x:0, y:0, width:d.w, height:d.h, rx:10, fill:'#f1ede4', stroke:'#b9b2a3', 'stroke-width':2, class:'body'}, g);
+    txt(g, d.w/2, 36, '전원 장치 (직류)', {class:'ctitle'});
+    el('rect', {x:6, y:50, width:d.w-12, height:d.h-56, rx:6, fill:'#5ab4dd', stroke:'#3b8fb5'}, g);
+    el('rect', {x:18, y:58, width:124, height:40, rx:4, fill:'#141414'}, g);
+    refs.psuV = txt(g, 118, 90, '0.0', {class:'seg7'});
+    txt(g, 123, 90, 'V', {class:'seg7u'});
+    el('rect', {x:158, y:58, width:124, height:40, rx:4, fill:'#141414'}, g);
+    refs.psuA = txt(g, 258, 90, '0.00', {class:'seg7'});
+    txt(g, 263, 90, 'A', {class:'seg7u'});
+    actBtn(g, 'vdown', 18, 120, 38, 34, '−');
+    actBtn(g, 'vup', 62, 120, 38, 34, '+');
+    txt(g, 106, 143, '전압 조절', {'font-size':16, 'font-weight':800, fill:'#0b3a52'});
+    txt(g, 205, 117, '−', {class:'pol', fill:'#111'});
+    txt(g, 255, 117, '+', {class:'pol', fill:'#b91c1c'});
+  },
+  sw(g, d){
+    el('rect', {x:0, y:0, width:d.w, height:d.h, rx:12, fill:'#fafafa', stroke:'#cbd5e1', 'stroke-width':2, class:'body'}, g);
+    const b = el('g', {'data-action':'toggle', class:'swbtn'}, g);
+    refs.swRock = el('rect', {x:17, y:62, width:76, height:40, rx:20, fill:'#cbd5e1', stroke:'#94a3b8', 'stroke-width':1.5}, b);
+    refs.swKnob = el('circle', {cx:37, cy:82, r:16, fill:'#fff', stroke:'#94a3b8', 'stroke-width':1.5, class:'swknob'}, b);
+    refs.swTxt = txt(g, 55, 126, 'OFF', {'text-anchor':'middle', 'font-size':18, 'font-weight':900, fill:'#64748b'});
+  },
+  sensor(g, d, kind){
+    el('rect', {x:0, y:0, width:d.w, height:d.h, rx:14, fill:'#fdfdfd', stroke:'#c9d3d6', 'stroke-width':2, class:'body'}, g);
+    el('rect', {x:12, y:10, width:86, height:80, rx:10, fill:'#1fb5c1'}, g);
+    el('rect', {x:19, y:17, width:72, height:30, rx:4, fill:'#0d1f23'}, g);
+    refs[kind + 'D'] = txt(g, 87, 39, '----', {class:'lcd'});
+    txt(g, 55, 76, kind === 'am' ? '전류 (A)' : '전압 (V)', {'text-anchor':'middle', 'font-size':17, 'font-weight':800, fill:'#fff'});
+    txt(g, 35, 106, '+', {class:'pol', fill:'#b91c1c'});
+    txt(g, 75, 106, '−', {class:'pol', fill:'#111'});
+  },
+  am(g, d){ DRAW.sensor(g, d, 'am'); },
+  vm(g, d){ DRAW.sensor(g, d, 'vm'); },
+  rb(g, d){
+    el('rect', {x:0, y:0, width:d.w, height:d.h, rx:12, fill:'#dfe3e8', stroke:'#a3abb5', 'stroke-width':2, class:'body'}, g);
+    txt(g, 18, 34, '니크롬선 저항판', {'font-size':22, 'font-weight':800, fill:'#1f2937'});
+    txt(g, d.w - 16, 33, '니크롬선 한 칸 = 5 Ω', {'font-size':17, 'font-weight':700, fill:'#475569', 'text-anchor':'end'});
+    refs.segGlow = [];
+    for (let k = 0; k < NSEG; k++){
+      const [ax, ay] = RB[k], [bx, by] = RB[k+1];
+      refs.segGlow.push(el('line', {x1:ax, y1:ay, x2:bx, y2:by, stroke:'#ff7a00', 'stroke-width':18, 'stroke-linecap':'round', opacity:0}, g));
+      el('line', {x1:ax, y1:ay, x2:bx, y2:by, stroke:'#6b4f22', 'stroke-width':3}, g);
+      el('line', {x1:ax, y1:ay, x2:bx, y2:by, stroke:'#c49a5a', 'stroke-width':10, 'stroke-dasharray':'1.6 3.4'}, g);
+      txt(g, (ax+bx)/2 + 12, (ay+by)/2 + 6, '5Ω', {class:'seglab'});
+    }
+  }
+};
+function drawTerm(g, t){
+  const tg = el('g', {'data-term':t.id, class:'term', transform:`translate(${t.x},${t.y})`}, g);
+  el('circle', {r:20, class:'hit'}, tg);
+  const fill = t.pol === '+' ? '#d62828' : t.pol === '-' ? '#222' : '#1e88e5';
+  el('circle', {r:11, fill, stroke:'#00000040', 'stroke-width':2, class:'jack'}, tg);
+  el('circle', {r:4, fill:'#fff', opacity:.55}, tg);
+  if (t.label) txt(g, t.x, t.y < 120 ? t.y - 20 : t.y + 33, t.label, {class:'letter'});
+  refs.term[t.id] = tg;
+}
+function renderComps(){
+  gComps.textContent = '';
+  for (const key of DRAW_ORDER){
+    const c = state.comps[key], d = DEF[key];
+    const g = el('g', {'data-comp':key, class:'comp', transform:`translate(${c.x},${c.y})`}, gComps);
+    refs.g[key] = g;
+    DRAW[key](g, d);
+    if (key !== 'rb' && key !== 'psu') txt(g, d.w/2, d.h + 20, d.name, {class:(key === 'am' || key === 'vm') ? 'cname cbig' : 'cname'});
+    d.terms.forEach(t => drawTerm(g, t));
+  }
+}
+function renderWires(){
+  gWires.textContent = '';
+  for (const w of state.wires){
+    const a = tpos(w.a), b = tpos(w.b), d = wirePath(a, b);
+    const g = el('g', {'data-wire':w.id, class:'wire' + (sel === w.id ? ' sel' : '')}, gWires);
+    el('path', {d, class:'whit'}, g);
+    el('path', {d, class:'wout'}, g);
+    el('path', {d, class:'win', stroke:w.color}, g);
+    el('circle', {cx:a.x, cy:a.y, r:6, fill:w.color, stroke:'#0006', class:'clip'}, g);
+    el('circle', {cx:b.x, cy:b.y, r:6, fill:w.color, stroke:'#0006', class:'clip'}, g);
+  }
+  const sw = state.wires.find(w => w.id === sel);
+  if (sw){
+    const a = tpos(sw.a), b = tpos(sw.b);
+    const sag = Math.min(110, 25 + Math.hypot(b.x-a.x, b.y-a.y)*0.22);
+    const mx = (a.x + b.x)/2, my = (a.y + b.y)/2 + 0.75*sag;
+    const g = el('g', {'data-del':sw.id, class:'delbtn'}, gWires);
+    el('circle', {cx:mx, cy:my, r:15, fill:'#dc2626', stroke:'#fff', 'stroke-width':3}, g);
+    txt(g, mx, my + 6, '✕', {'text-anchor':'middle', 'font-size':16, 'font-weight':900, fill:'#fff'});
+  }
+}
+
+/* ===== 회로 계산 (절점 해석) ===== */
+function nodeMap(){
+  const parent = {}; TERM_IDS.forEach(id => parent[id] = id);
+  const find = x => parent[x] === x ? x : (parent[x] = find(parent[x]));
+  for (const w of state.wires){ const ra = find(w.a), rb = find(w.b); if (ra !== rb) parent[ra] = rb; }
+  const idx = {}, node = {}; let n = 0;
+  for (const id of TERM_IDS){ const r = find(id); if (!(r in idx)) idx[r] = n++; node[id] = idx[r]; }
+  return {node, n};
+}
+function gauss(A, b){
+  const n = b.length;
+  for (let c = 0; c < n; c++){
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    if (p !== c){ const tA = A[c]; A[c] = A[p]; A[p] = tA; const tb = b[c]; b[c] = b[p]; b[p] = tb; }
+    const piv = A[c][c]; if (Math.abs(piv) < 1e-18) continue;
+    for (let r = c + 1; r < n; r++){ const f = A[r][c]/piv; if (f === 0) continue; for (let k = c; k < n; k++) A[r][k] -= f*A[c][k]; b[r] -= f*b[c]; }
+  }
+  const x = new Float64Array(n);
+  for (let r = n - 1; r >= 0; r--){ let s = b[r]; for (let k = r + 1; k < n; k++) s -= A[r][k]*x[k]; x[r] = Math.abs(A[r][r]) < 1e-18 ? 0 : s/A[r][r]; }
+  return x;
+}
+// o: {V, sw, noAm, vmWire}
+function solve(o){
+  const {node, n} = nodeMap();
+  const G = Array.from({length:n}, () => new Float64Array(n)), I = new Float64Array(n);
+  const st = (a, b, g) => { if (a === b) return; G[a][a] += g; G[b][b] += g; G[a][b] -= g; G[b][a] -= g; };
+  const P = node['psu+'], M = node['psu-'], gs = 1/R_SRC;
+  if (P !== M){ st(P, M, gs); I[P] += o.V*gs; I[M] -= o.V*gs; }
+  if (o.sw) st(node.sw1, node.sw2, 1/R_SW);
+  if (!o.noAm) st(node['am+'], node['am-'], 1/R_AM);
+  st(node['vm+'], node['vm-'], o.vmWire ? 1/R_AM : 1/R_VM);
+  for (let k = 0; k < NSEG; k++) st(node['r'+k], node['r'+(k+1)], 1/SEG_R);
+  for (let i = 0; i < n; i++) G[i][i] += 1e-9;
+  const keep = []; for (let i = 0; i < n; i++) if (i !== M) keep.push(i);
+  const A = keep.map(i => Float64Array.from(keep.map(j => G[i][j])));
+  const bb = Float64Array.from(keep.map(i => I[i]));
+  const x = gauss(A, bb);
+  const v = new Float64Array(n); keep.forEach((i, j) => v[i] = x[j]);
+  const Isrc = (P === M) ? (o.V > 0 ? Infinity : 0) : (o.V - (v[P] - v[M]))*gs;
+  const Iam = o.noAm ? 0 : (v[node['am+']] - v[node['am-']])/R_AM;
+  const Vvm = v[node['vm+']] - v[node['vm-']];
+  const seg = []; for (let k = 0; k < NSEG; k++) seg.push((v[node['r'+k]] - v[node['r'+(k+1)]])/SEG_R);
+  return {v, node, Isrc, Iam, Vvm, seg};
+}
+function connCount(){ const c = {}; TERM_IDS.forEach(id => c[id] = 0); state.wires.forEach(w => { c[w.a]++; c[w.b]++; }); return c; }
+function wireSig(){ return state.wires.map(w => [w.a, w.b].sort().join('~')).sort().join('|'); }
+
+/* ===== 회로 점검 ===== */
+function checkCircuit(){
+  const items = []; const add = (st, title, msg) => items.push({st, title, msg});
+  const conn = connCount(), miss = [];
+  if (!conn['psu+'] || !conn['psu-']) miss.push('전원 장치');
+  if (!conn.sw1 || !conn.sw2) miss.push('스위치');
+  if (!conn['am+'] || !conn['am-']) miss.push('전류 센서');
+  if (!conn['vm+'] || !conn['vm-']) miss.push('전압 센서');
+  if (RB.filter((_, i) => conn['r'+i] > 0).length < 2) miss.push('니크롬선 저항판');
+  if (miss.length){ add('bad', '부품 연결', `${miss.join(', ')}의 단자가 아직 연결되지 않았어요. 모든 부품의 두 단자를 연결하세요.`); return {items, pass:false}; }
+  add('ok', '부품 연결', '모든 부품의 단자가 연결되었어요.');
+
+  const VT = 3;
+  const sc = solve({V:VT, sw:true}), so = solve({V:VT, sw:false});
+  // 1. 단락
+  if (sc.Isrc > I_LIMIT){
+    const na = solve({V:VT, sw:true, noAm:true});
+    const msg = (na.Isrc > 1e-3 && na.Isrc < I_LIMIT)
+      ? '전류 센서가 병렬로 연결되어 전류 센서 쪽으로 매우 큰 전류가 흘러요. 전류 센서는 회로에 직렬로 연결해야 해요.'
+      : '전원의 (+)극과 (−)극이 니크롬선을 거치지 않고 도선으로 이어져 있어요. 전류가 반드시 니크롬선을 지나도록 연결하세요.';
+    add('bad', '단락(합선) 없음', msg); return {items, pass:false};
+  }
+  add('ok', '단락(합선) 없음', '전원이 도선으로 바로 이어진 곳이 없어요.');
+  // 2. 닫힌 회로
+  if (sc.Isrc < 1e-3){
+    const vw = solve({V:VT, sw:true, vmWire:true});
+    const msg = (vw.Isrc > 1e-3 && vw.Isrc < I_LIMIT)
+      ? '전압 센서가 직렬로 연결되어 있어요. 전압 센서는 저항이 매우 커서 직렬로 연결하면 전류가 거의 흐르지 않아요. 전압 센서는 니크롬선 양 끝에 병렬로 연결하세요.'
+      : '전류가 흐르는 닫힌 회로가 만들어지지 않았어요. 전원 (+)극에서 출발해 부품을 차례로 거쳐 (−)극으로 돌아오는 길이 끊김 없이 이어졌는지 확인하세요.';
+    add('bad', '닫힌 회로', msg); return {items, pass:false};
+  }
+  add('ok', '닫힌 회로', '스위치를 켜면 전류가 흐르는 회로예요.');
+  let pass = true;
+  // 3. 스위치
+  if (so.Isrc < 0.01*sc.Isrc) add('ok', '스위치 직렬 연결', '스위치를 끄면 전류가 끊겨요.');
+  else { pass = false; add('bad', '스위치 직렬 연결', '스위치를 꺼도 전류가 흘러요. 스위치를 건너뛰는 도선이 있거나 스위치가 회로에 직렬로 연결되지 않았어요.'); }
+  // 4. 전류 센서
+  const amSeries = Math.abs(Math.abs(sc.Iam) - sc.Isrc) <= 0.02*sc.Isrc;
+  if (amSeries) add('ok', '전류 센서 직렬 연결', '회로 전체의 전류가 전류 센서를 지나요.');
+  else { pass = false; add('bad', '전류 센서 직렬 연결', '전류 센서에 회로 전체의 전류가 흐르지 않아요. 전류 센서는 전원·스위치·니크롬선과 한 줄로 이어지도록(직렬) 연결해야 해요.'); }
+  // 5. 니크롬선
+  const frac = sc.seg.map(i => Math.abs(i)/sc.Isrc);
+  const used = frac.map(f => f > 0.9);
+  const kmin = used.indexOf(true), kmax = used.lastIndexOf(true);
+  const partial = frac.some(f => f > 0.01 && f <= 0.9);
+  const contiguous = kmin >= 0 && used.slice(kmin, kmax + 1).every(Boolean);
+  const rOk = kmin >= 0 && contiguous && !partial;
+  let R = null;
+  if (rOk){ R = (kmax - kmin + 1)*SEG_R; add('ok', '니크롬선 연결', '전류가 니크롬선을 지나요.'); }
+  else { pass = false; add('bad', '니크롬선 연결', '니크롬선 일부를 도선이 건너뛰거나 전류가 두 갈래로 나뉘어 흘러요. 니크롬선에는 두 단자만 연결해 보세요.'); }
+  // 6. 전압 센서
+  const na = sc.node['vm+'], nb = sc.node['vm-'];
+  let vmOk = false;
+  if (!rOk) add('skip', '전압 센서 병렬 연결', '니크롬선 연결을 먼저 바르게 고친 뒤 확인할 수 있어요.');
+  else {
+    const e1 = sc.node['r'+kmin], e2 = sc.node['r'+(kmax+1)];
+    const hi = sc.v[e1] >= sc.v[e2] ? e1 : e2, lo = hi === e1 ? e2 : e1;
+    if ((na === hi && nb === lo) || (na === lo && nb === hi)){
+      if (na === hi){ vmOk = true; add('ok', '전압 센서 병렬 연결', '전압 센서가 니크롬선 양 끝에 병렬로 연결되었어요.'); }
+      else { pass = false; add('bad', '전압 센서 (+)/(−) 방향', '전압 센서가 병렬로 연결되었지만 (+), (−) 단자가 반대예요. (+)단자는 전원 (+)극 쪽, (−)단자는 전원 (−)극 쪽에 연결하세요.'); }
+    } else if (na === nb){ pass = false; add('bad', '전압 센서 병렬 연결', '전압 센서의 두 단자가 같은 지점에 연결되어 있어요. 니크롬선의 양 끝에 하나씩 연결하세요.'); }
+    else { pass = false; add('bad', '전압 센서 병렬 연결', '전압 센서는 전류가 지나는 니크롬선 구간의 양 끝(니크롬선에 연결한 두 단자)에 병렬로 연결해야 해요.'); }
+  }
+  // 7. 전류 센서 방향
+  if (amSeries){
+    if (sc.Iam > 0) add('ok', '전류 센서 (+)/(−) 방향', '전류가 (+)단자로 들어가 (−)단자로 나와요.');
+    else { pass = false; add('bad', '전류 센서 (+)/(−) 방향', '전류 센서의 (+), (−) 단자가 반대예요. 전원 (+)극 쪽을 (+)단자에, 전원 (−)극 쪽을 (−)단자에 연결하세요.'); }
+  }
+  return {items, pass: pass && vmOk, R};
+}
+function renderCheck(chk){
+  const ic = {ok:'✅', bad:'❌', skip:'⏺'};
+  $('#checkList').innerHTML = chk.items.map(i => `<li><span class="ic">${ic[i.st]}</span><div><b>${esc(i.title)}</b><span class="m">${esc(i.msg)}</span></div></li>`).join('');
+  lastCheck = chk; lastCheckSig = wireSig();
+  renderCheckFoot();
+}
+function renderCheckFoot(){
+  const f = $('#checkFoot');
+  if (!lastCheck){ f.innerHTML = ''; return; }
+  if (lastCheckSig !== wireSig()){ f.innerHTML = '<div class="stale">연결이 바뀌었어요. 다시 점검해 보세요.</div>'; return; }
+  f.innerHTML = lastCheck.pass ? '<div class="passbadge">🎉 바르게 연결했어요! 스위치를 켜고 측정을 시작하세요.</div>' : '';
+}
+
+/* ===== 화면 갱신 ===== */
+function update(){
+  const s = solve({V:state.V, sw:state.swOn});
+  const short = s.Isrc > I_LIMIT;
+  const conn = connCount();
+  refs.psuV.textContent = state.V.toFixed(1);
+  refs.psuA.textContent = short ? 'OL' : fmt(Math.max(0, s.Isrc), 2);
+  const amOk = conn['am+'] && conn['am-'], vmOk = conn['vm+'] && conn['vm-'];
+  const amTxt = !amOk ? '----' : (Math.abs(s.Iam) > I_LIMIT ? 'OVER' : fmt(s.Iam, 3));
+  const vmTxt = !vmOk ? '----' : fmt(s.Vvm, 2);
+  refs.amD.textContent = amTxt; refs.vmD.textContent = vmTxt;
+  $('#liveI').textContent = amTxt === '----' || amTxt === 'OVER' ? amTxt : amTxt + ' A';
+  $('#liveV').textContent = vmTxt === '----' ? vmTxt : vmTxt + ' V';
+  s.seg.forEach((i, k) => { const a = Math.abs(i); refs.segGlow[k].setAttribute('opacity', short || a < 1e-3 ? 0 : Math.min(0.75, 0.15 + a/0.6*0.6)); });
+  $('#shortBanner').classList.toggle('hidden', !short);
+  refs.swRock.setAttribute('fill', state.swOn ? '#22c55e' : '#cbd5e1');
+  refs.swRock.setAttribute('stroke', state.swOn ? '#16a34a' : '#94a3b8');
+  refs.swKnob.style.transform = state.swOn ? 'translateX(36px)' : 'translateX(0)';
+  refs.swTxt.textContent = state.swOn ? 'ON' : 'OFF';
+  refs.swTxt.setAttribute('fill', state.swOn ? '#16a34a' : '#64748b');
+  renderCheckFoot();
+  renderVFix();
+}
+function renderVFix(){
+  const on = state.exp === 2, ok = Math.abs(state.V - 2) < 1e-9;
+  const html = `<div class="vfix-title">⚡ 실험 2 : 전원 전압은 반드시 <span class="vfix-num">2.0 V</span> 고정!</div>` +
+    `<div class="vfix-state">${ok ? '' : `⚠ 지금 ${state.V.toFixed(1)} V — 전원 장치의 −/+ 버튼으로 2.0 V에 맞추세요.`}</div>`;
+  for (const id of ['#vFixBox', '#vFixBench']){
+    const b = $(id); b.classList.toggle('hidden', !on); b.classList.toggle('ok', ok); b.classList.toggle('bad', !ok); b.innerHTML = html;
+  }
+}
+function setV(v){ state.V = clamp(Math.round(v*10)/10, 0, 3); update(); save(); }
+function toggleSw(){ state.swOn = !state.swOn; update(); save(); }
+function doAction(a){ if (a === 'vup') setV(state.V + 0.1); else if (a === 'vdown') setV(state.V - 0.1); else if (a === 'toggle') toggleSw(); }
+
+/* ===== 도선 ===== */
+function autoColor(a, b){
+  if (state.wireColor !== 'auto') return state.wireColor;
+  const pa = TERM_INDEX[a].t.pol, pb = TERM_INDEX[b].t.pol;
+  if (pa === '+' || pb === '+') return '#d32f2f';
+  if (pa === '-' || pb === '-') return '#222222';
+  return '#f2b705';
+}
+function addWire(a, b){
+  if (state.wires.some(w => (w.a === a && w.b === b) || (w.a === b && w.b === a))){ toast('이미 연결된 도선이에요.'); return; }
+  state.wires.push({id:'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), a, b, color:autoColor(a, b)});
+  sel = null; renderWires(); update(); save();
+}
+function removeWire(id){ state.wires = state.wires.filter(w => w.id !== id); if (sel === id) sel = null; renderWires(); update(); save(); }
+
+/* ===== 포인터 ===== */
+function svgPt(e){ const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function under(e, selector){
+  for (const n of document.elementsFromPoint(e.clientX, e.clientY)){ const m = n.closest && n.closest(selector); if (m && svg.contains(m)) return m; }
+  return null;
+}
+let hoverTerm = null;
+function setHover(t){ if (hoverTerm === t) return; if (hoverTerm) hoverTerm.classList.remove('hover'); hoverTerm = t; if (t) t.classList.add('hover'); }
+svg.addEventListener('pointerdown', e => {
+  if (e.button) return;
+  const t = e.target;
+  const del = t.closest('[data-del]'); if (del){ removeWire(del.dataset.del); e.preventDefault(); return; }
+  const act = t.closest('[data-action]'); if (act){ doAction(act.dataset.action); e.preventDefault(); return; }
+  const term = under(e, '[data-term]');
+  if (term){
+    const id = term.dataset.term, p = tpos(id);
+    drag = {type:'wire', from:id};
+    tempPath.setAttribute('d', wirePath(p, p)); tempPath.style.display = '';
+    svg.setPointerCapture(e.pointerId); e.preventDefault(); return;
+  }
+  const w = t.closest('[data-wire]'); if (w){ sel = w.dataset.wire; renderWires(); e.preventDefault(); return; }
+  if (sel){ sel = null; renderWires(); }
+  const c = t.closest('[data-comp]');
+  if (c){
+    const key = c.dataset.comp, p = svgPt(e);
+    drag = {type:'comp', key, dx:p.x - state.comps[key].x, dy:p.y - state.comps[key].y};
+    gComps.appendChild(c); c.classList.add('dragging');
+    svg.setPointerCapture(e.pointerId); e.preventDefault();
+  }
+});
+svg.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const p = svgPt(e);
+  if (drag.type === 'comp'){
+    const d = DEF[drag.key], lab = (drag.key === 'rb' || drag.key === 'psu') ? 0 : 26;
+    const c = state.comps[drag.key];
+    c.x = Math.round(clamp(p.x - drag.dx, 0, VBW - d.w)); c.y = Math.round(clamp(p.y - drag.dy, 0, VBH - d.h - lab));
+    refs.g[drag.key].setAttribute('transform', `translate(${c.x},${c.y})`);
+    renderWires();
+  } else {
+    tempPath.setAttribute('d', wirePath(tpos(drag.from), p));
+    const term = under(e, '[data-term]');
+    setHover(term && term.dataset.term !== drag.from ? term : null);
+  }
+});
+function endDrag(e, cancel){
+  if (!drag) return;
+  if (drag.type === 'wire'){
+    tempPath.style.display = 'none'; setHover(null);
+    if (!cancel){ const term = under(e, '[data-term]'); if (term && term.dataset.term !== drag.from) addWire(drag.from, term.dataset.term); }
+  } else { refs.g[drag.key].classList.remove('dragging'); save(); }
+  drag = null;
+}
+svg.addEventListener('pointerup', e => endDrag(e, false));
+svg.addEventListener('pointercancel', e => endDrag(e, true));
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Delete' || e.key === 'Backspace') && sel && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ removeWire(sel); e.preventDefault(); }
+});
+
+/* ===== 측정·기록 ===== */
+function record(){
+  const chk = checkCircuit(); renderCheck(chk);
+  if (!chk.pass){ toast('회로 점검을 통과해야 측정값을 기록할 수 있어요.', 'bad'); return; }
+  if (!state.swOn){ toast('스위치를 켜야 측정할 수 있어요.', 'bad'); return; }
+  if (state.V <= 0){ toast('전원 전압을 0 V보다 크게 올려 주세요.', 'bad'); return; }
+  const s = solve({V:state.V, sw:true});
+  const Vm = Number(s.Vvm.toFixed(2)), Im = Number(s.Iam.toFixed(3));
+  if (state.exp === 1){
+    const d = state.data1;
+    if (d.length && d[0].R !== chk.R){ toast('실험 1에서는 니크롬선 연결(저항)을 바꾸면 안 돼요. 처음과 같은 단자에 연결하세요.', 'bad'); return; }
+    d.push({set:state.V, V:Vm, I:Im, R:chk.R});
+    toast(`${d.length}번째 측정값을 표에 기록했어요.`, 'ok');
+  } else {
+    const d = state.data2;
+    if (d.length >= TARGETS.length){ toast('모든 목표를 측정했어요. 다시 하려면 데이터 지우기를 누르세요.'); return; }
+    const target = TARGETS[d.length];
+    if (Math.abs(state.V - 2) > 1e-9){ toast(`실험 2에서는 전원 전압을 반드시 2.0 V로 맞춰야 해요. (지금 ${state.V.toFixed(1)} V)`, 'bad'); return; }
+    if (chk.R !== target){
+      toast(chk.R < target ? '목표보다 저항이 작아요. 전류가 니크롬선을 더 길게 지나도록 연결 단자를 바꿔 보세요.' : '목표보다 저항이 커요. 전류가 니크롬선을 더 짧게 지나도록 연결 단자를 바꿔 보세요.', 'bad');
+      return;
+    }
+    d.push({set:state.V, V:Vm, I:Im, R:target});
+    toast(`${target} Ω 측정 성공!`, 'ok');
+  }
+  state.graphOn[state.exp] = false;
+  save(); renderData();
+}
+function renderMission(){
+  const m = $('#mission');
+  if (state.exp !== 2){ m.classList.add('hidden'); return; }
+  m.classList.remove('hidden');
+  const n = state.data2.length;
+  if (n >= TARGETS.length){ m.className = 'mission done'; m.innerHTML = '✅ 모든 목표 저항을 측정했어요!'; return; }
+  m.className = 'mission';
+  const fixed = ' · 전압 2.0 V 고정';
+  m.innerHTML = `🎯 현재 목표: 니크롬선 저항 <b>${TARGETS[n]} Ω</b> 만들기 (${n + 1}/${TARGETS.length})${fixed}`;
+}
+function renderData(){
+  renderMission();
+  const tw = $('#tableWrap'), con = $('#conclusion');
+  if (state.exp === 1){
+    const d = state.data1;
+    tw.innerHTML = '<table><tr><th>전원 설정 (V)</th><th>전압 센서 (V)</th><th>전류 센서 (A)</th><th></th></tr>' +
+      (d.length ? d.map((r, i) => `<tr><td>${r.set.toFixed(1)}</td><td>${r.V.toFixed(2)}</td><td>${r.I.toFixed(3)}</td><td><button class="btn small ghost" data-delrow="${i}">삭제</button></td></tr>`).join('')
+                : '<tr><td colspan="4" class="pending">아직 기록이 없어요</td></tr>') + '</table>';
+    if (d.length >= 3 && state.graphOn[1]){
+      const sxy = d.reduce((s, r) => s + r.V*r.I, 0), sxx = d.reduce((s, r) => s + r.V*r.V, 0);
+      const k = sxy/sxx;
+      con.innerHTML = `그래프가 <b>원점을 지나는 직선</b> 모양이에요. 전압이 2배, 3배…가 되면 전류도 2배, 3배…가 돼요 → <b>전류는 전압에 비례</b>해요.<br>기울기(전류÷전압) ≈ ${k.toFixed(3)} A/V, 그 역수(전압÷전류) ≈ <b>${(1/k).toFixed(1)} Ω</b>이 이 니크롬선의 저항이에요.`;
+    } else con.innerHTML = '';
+  } else {
+    const d = state.data2;
+    tw.innerHTML = '<table><tr><th>목표 저항 (Ω)</th><th>전압 (V)</th><th>전류 (A)</th><th>전압÷전류 (Ω)</th></tr>' +
+      TARGETS.map((t, i) => { const r = d[i]; return r ? `<tr><td>${t}</td><td>${r.V.toFixed(2)}</td><td>${r.I.toFixed(3)}</td><td>${(r.V/r.I).toFixed(1)}</td></tr>` : `<tr><td>${t}</td><td class="pending">—</td><td class="pending">—</td><td class="pending">—</td></tr>`; }).join('') + '</table>';
+    con.innerHTML = d.length >= TARGETS.length && state.graphOn[2]
+      ?'저항이 2배, 3배…로 커지면 전류는 1/2, 1/3…로 작아져요 → 전압이 일정할 때 <b>전류는 저항에 반비례</b>해요.<br>니크롬선을 <b>길게</b> 지나도록 연결할수록 저항이 커져요.'
+      : '';
+  }
+  $('#quizCard').classList.toggle('hidden', !(state.exp === 2 && state.data2.length >= TARGETS.length));
+  renderQuiz();
+  drawGraph();
+}
+$('#tableWrap').addEventListener('click', e => {
+  const b = e.target.closest('[data-delrow]'); if (!b) return;
+  state.data1.splice(Number(b.dataset.delrow), 1); state.graphOn[1] = false; save(); renderData();
+});
+
+/* ===== 그래프 ===== */
+function niceMax(v){ for (const c of [0.1,0.2,0.3,0.4,0.5,0.6,0.8,1,1.2,1.5,2]) if (c >= v) return c; return Math.ceil(v); }
+function drawGraph(){
+  const cv = $('#graph'), dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+  cv.width = W*dpr; cv.height = H*dpr;
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  const L = 50, Rm = 14, T = 12, B = 40, pw = W - L - Rm, ph = H - T - B;
+  const e1 = state.exp === 1, d = e1 ? state.data1 : state.data2;
+  const xmax = e1 ? 3 : 30, xstep = e1 ? 0.5 : 5;
+  const pts = state.graphOn[state.exp] ? d.map(r => ({x: e1 ? r.V : r.R, y: r.I})) : [];
+  const ymax = niceMax(Math.max(0.1, ...pts.map(p => p.y))*1.1), ystep = ymax/5;
+  const X = x => L + x/xmax*pw, Y = y => T + ph - y/ymax*ph;
+  c.font = '11px system-ui,sans-serif'; c.strokeStyle = '#e5e7eb'; c.fillStyle = '#6b7280'; c.lineWidth = 1;
+  c.textAlign = 'center';
+  for (let x = 0; x <= xmax + 1e-9; x += xstep){ c.beginPath(); c.moveTo(X(x), T); c.lineTo(X(x), T + ph); c.stroke(); c.fillText(e1 ? x.toFixed(1) : String(x), X(x), T + ph + 14); }
+  c.textAlign = 'right';
+  for (let i = 0; i <= 5; i++){ const y = ystep*i; c.beginPath(); c.moveTo(L, Y(y)); c.lineTo(L + pw, Y(y)); c.stroke(); c.fillText(y.toFixed(ymax < 1 ? 2 : 1), L - 5, Y(y) + 4); }
+  c.strokeStyle = '#374151'; c.beginPath(); c.moveTo(L, T); c.lineTo(L, T + ph); c.lineTo(L + pw, T + ph); c.stroke();
+  c.fillStyle = '#374151'; c.font = 'bold 12px system-ui,sans-serif'; c.textAlign = 'center';
+  c.fillText(e1 ? '전압 (V)' : '저항 (Ω)', L + pw/2, H - 6);
+  c.save(); c.translate(13, T + ph/2); c.rotate(-Math.PI/2); c.fillText('전류 (A)', 0, 0); c.restore();
+  c.save(); c.beginPath(); c.rect(L, T, pw, ph); c.clip();
+  if (e1 && pts.length >= 2){
+    const k = pts.reduce((s, p) => s + p.x*p.y, 0)/pts.reduce((s, p) => s + p.x*p.x, 0);
+    c.strokeStyle = '#0e9aa7'; c.lineWidth = 2; c.setLineDash([6, 4]); c.beginPath(); c.moveTo(X(0), Y(0)); c.lineTo(X(xmax), Y(k*xmax)); c.stroke(); c.setLineDash([]);
+  }
+  if (!e1 && pts.length >= 3){
+    const kc = pts.reduce((s, p) => s + p.x*p.y, 0)/pts.length;
+    c.strokeStyle = '#0e9aa7'; c.lineWidth = 2; c.setLineDash([6, 4]); c.beginPath();
+    for (let x = 3; x <= xmax; x += 0.25){ const y = kc/x; x === 3 ? c.moveTo(X(x), Y(y)) : c.lineTo(X(x), Y(y)); }
+    c.stroke(); c.setLineDash([]);
+  }
+  c.restore();
+  c.fillStyle = '#2563eb';
+  for (const p of pts){ c.beginPath(); c.arc(X(p.x), Y(p.y), 5, 0, Math.PI*2); c.fill(); }
+  if (!state.graphOn[state.exp]){
+    c.fillStyle = '#94a3b8'; c.font = 'bold 13px system-ui,sans-serif'; c.textAlign = 'center';
+    c.fillText('표에 측정값을 기록한 뒤', L + pw/2, T + ph/2 - 8);
+    c.fillText('\'그래프 그리기\'를 눌러요', L + pw/2, T + ph/2 + 12);
+  }
+}
+
+/* ===== 퀴즈 ===== */
+function renderQuiz(){
+  $('#quiz').innerHTML = QUIZ.map((q, qi) => {
+    const a = quizAns[qi];
+    const opts = q.opts.map((o, oi) => {
+      let cls = 'opt'; if (a !== undefined){ if (oi === q.ans) cls += ' right'; else if (oi === a) cls += ' wrong'; }
+      return `<button class="${cls}" data-q="${qi}" data-o="${oi}">${esc(o)}</button>`;
+    }).join('');
+    const ex = a === undefined ? '' : `<div class="qexp">${a === q.ans ? '⭕ 정답!' : '❌ 다시 생각해 봐요.'} ${esc(q.exp)}</div>`;
+    return `<div class="q"><p>Q${qi + 1}. ${esc(q.q)}</p><div class="opts">${opts}</div>${ex}</div>`;
+  }).join('');
+}
+$('#quiz').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (!b) return; quizAns[b.dataset.q] = Number(b.dataset.o); renderQuiz(); });
+
+/* ===== 패널·탭 ===== */
+function renderExp(){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', Number(t.dataset.exp) === state.exp));
+  const x = EXP[state.exp];
+  $('#goalTitle').textContent = x.title; $('#goalText').textContent = x.goal;
+  $('#steps').innerHTML = x.steps.map(s => `<li>${esc(s)}</li>`).join('');
+  $('#hintBox').classList.add('hidden');
+  renderData();
+  renderVFix();
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { state.exp = Number(t.dataset.exp); save(); renderExp(); }));
+$('#btnCheck').addEventListener('click', () => renderCheck(checkCircuit()));
+$('#btnRecord').addEventListener('click', record);
+$('#btnHint').addEventListener('click', () => { const h = $('#hintBox'); h.innerHTML = EXP[state.exp].hint; h.classList.toggle('hidden'); });
+$('#btnClearData').addEventListener('click', () => askConfirm('데이터 지우기', `실험 ${state.exp}의 측정 기록을 모두 지울까요?`, () => {
+  if (state.exp === 1) state.data1 = []; else { state.data2 = []; for (const k in quizAns) delete quizAns[k]; }
+  state.graphOn[state.exp] = false;
+  save(); renderData();
+}));
+$('#btnGraph').addEventListener('click', () => {
+  const n = (state.exp === 1 ? state.data1 : state.data2).length;
+  if (n < 2){ toast('측정값을 2개 이상 기록한 뒤 그래프를 그려요.', 'bad'); return; }
+  state.graphOn[state.exp] = true; save(); renderData();
+});
+$('#btnDelWire').addEventListener('click', () => { if (sel) removeWire(sel); else toast('먼저 지울 도선을 눌러 선택하세요.'); });
+$('#btnClearWires').addEventListener('click', () => askConfirm('도선 모두 지우기', '연결한 도선을 모두 지울까요?', () => { state.wires = []; sel = null; renderWires(); update(); save(); }));
+$('#btnHome').addEventListener('click', () => { state.comps = JSON.parse(JSON.stringify(HOME)); renderComps(); renderWires(); update(); save(); });
+$('#btnHelp').addEventListener('click', () => $('#helpModal').classList.remove('hidden'));
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.modal').classList.add('hidden')));
+$('#btnExample').addEventListener('click', () => askConfirm('정답 예시(교사용)', '예시 회로로 바꿀까요? 지금 연결한 도선은 모두 지워져요.', () => {
+  const mk = (a, b, color) => ({id:'w' + Math.random().toString(36).slice(2, 9), a, b, color});
+  state.wires = [mk('psu+','am+','#d32f2f'), mk('am-','r0','#222222'), mk('r2','sw1','#222222'), mk('sw2','psu-','#222222'), mk('vm+','r0','#d32f2f'), mk('vm-','r2','#222222')];
+  sel = null; renderWires(); update(); save();
+}));
+function renderChips(){
+  $('#chips').innerHTML = COLORS.map(([c, n]) => c === 'auto'
+    ? `<button class="chip auto${state.wireColor === c ? ' on' : ''}" data-c="${c}" title="자동: + 단자는 빨강, − 단자는 검정">자동</button>`
+    : `<button class="chip${state.wireColor === c ? ' on' : ''}" data-c="${c}" title="${n}" style="background:${c}"></button>`).join('');
+}
+$('#chips').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; state.wireColor = b.dataset.c; renderChips(); save(); });
+window.addEventListener('resize', drawGraph);
+
+/* ===== 시작 ===== */
+load();
+renderComps(); renderWires(); renderChips(); update(); renderExp();
+</script>
+</body>
+</html>
